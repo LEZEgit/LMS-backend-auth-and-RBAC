@@ -1,9 +1,8 @@
 import { prisma } from "../config/db.js";
 import bcrypt from "bcryptjs";
 
-const registerUser = async (req, res) => {
-  // 1. Authorization Check
-  // Assuming your auth middleware puts the logged-in user in req.user
+const registerUsersBulk = async (req, res) => {
+  // 1. Authorization Check (Still required for the requester)
   if (req.user.role !== "ADMIN" && req.user.role !== "ROOT_ADMIN") {
     const error = new Error("Access denied.");
     error.status = 403;
@@ -11,48 +10,72 @@ const registerUser = async (req, res) => {
     throw error;
   }
 
-  const { firstName, lastName, email, password, role } = req.body;
+  // Expecting an array of users in req.body
+  const usersArray = req.body;
 
-  // 2. Check if email is already taken
-  const userExists = await prisma.user.findUnique({
-    where: { email },
-  });
-
-  if (userExists) {
-    const error = new Error("User already exists with the same email");
+  if (!Array.isArray(usersArray) || usersArray.length === 0) {
+    const error = new Error("Invalid input: Expected an array of users.");
     error.status = 400;
-    error.code = "DUPLICATE_EMAIL";
     throw error;
   }
 
-  // 3. Hash Password
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
+  const results = {
+    success: [],
+    errors: [],
+  };
 
-  // 4. Create User
-  const user = await prisma.user.create({
-    data: {
-      firstName,
-      lastName: lastName || "",
-      email,
-      password: hashedPassword,
-      role: role || "READER",
-      // This links the new user to the Admin who created them
-      createdBy: req.user.id,
-    },
-  });
+  // 2. Process each user
+  // We use a for...of loop to handle async/await properly for each record
+  for (const userData of usersArray) {
+    const { firstName, lastName, email, password, role } = userData;
 
+    try {
+      // dont allow admin to create a root_admin
+      if (req.user.role === "ADMIN" && role === "ROOT_ADMIN") {
+        results.errors.push({ email, message: "Access denied" });
+      }
+      // Check if email is already taken
+      const userExists = await prisma.user.findUnique({ where: { email } });
+      if (userExists) {
+        results.errors.push({ email, message: "User already exists" });
+        continue; // Skip to next user
+      }
+
+      // Hash Password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      // Create User
+      const newUser = await prisma.user.create({
+        data: {
+          firstName,
+          lastName: lastName || "",
+          email,
+          password: hashedPassword,
+          role: role || "READER",
+          createdBy: req.user.id,
+        },
+      });
+
+      results.success.push({
+        id: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+      });
+    } catch (err) {
+      results.errors.push({ email, message: err.message });
+    }
+  }
+
+  // 3. Final Response
   res.status(201).json({
-    status: "Success",
-    data: {
-      user: {
-        id: user.id,
-        name: `${user.firstName} ${user.lastName}`.trim(),
-        email: user.email,
-        role: user.role,
-        createdBy: user.createdBy, // Useful for confirmation
-      },
+    status: "Process Completed",
+    summary: {
+      total: usersArray.length,
+      successful: results.success.length,
+      failed: results.errors.length,
     },
+    data: results,
   });
 };
 
@@ -277,7 +300,7 @@ const resetPasswordByAdmin = async (req, res) => {
 };
 
 export {
-  registerUser,
+  registerUsersBulk,
   getAllUsers,
   deleteUser,
   deleteManyUsers,

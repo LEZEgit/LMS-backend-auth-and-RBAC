@@ -6,6 +6,7 @@ import {
   resetPasswordByAdmin,
   deleteManyUsers,
   updateRole,
+  registerUsersBulk,
 } from "../../controllers/crudReaderController.js";
 import { validateRequest } from "../../middleware/validateRequest.js";
 import {
@@ -13,10 +14,12 @@ import {
   adminUpdateUserSchema,
   deleteUsersSchema,
   registerSchema,
+  registerBulkSchema,
   userIdParamsSchema,
 } from "../../validators/crudReaderValidator.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
+import { excelToJsonMiddleware } from "../../middleware/excelToJson.js";
 const router = express.Router();
 
 // need a middleware here to verify that the user sending this request has role: ADMIN || role: ROOT_ADMIN
@@ -24,27 +27,38 @@ const router = express.Router();
 router.use(authenticate);
 
 router.get("/", authorize(["ROOT_ADMIN", "ADMIN"]), getAllUsers);
+
+/*
+A Note on Frontend Implementation:
+1. For the File: The frontend must use FormData and append('file', yourFile).
+
+2. For the Form: The frontend can send a standard JSON Content-Type: application/json with the array [{...}, {...}].
+
+3. Multer Tip: By putting upload.single("file") first, if the request is JSON, Multer simply does nothing and passes it to the next middleware. It won't crash the request.
+*/
 router.post(
   "/",
-  authorize(["ROOT_ADMIN", "ADMIN"]),
-  validateRequest(registerSchema),
-  registerUser,
+  authorize(["ROOT_ADMIN"]),
+  upload.single("file"),      // 1. Grab file from 'file' field in form-data
+  excelToJsonMiddleware,      // 2. Turn file or raw body into a unified array
+  validateRequest(registerBulkSchema),
+  registerUsersBulk,
 );
 router.delete(
   "/:id",
-  authorize(["ROOT_ADMIN", "ADMIN"]),
+  authorize(["ROOT_ADMIN"]),
   validateRequest(userIdParamsSchema, "params"),
   deleteUser,
 );
 router.delete(
   "/delete-many",
-  authorize(["ROOT_ADMIN", "ADMIN"]),
+  authorize(["ROOT_ADMIN"]),
   validateRequest(deleteUsersSchema),
   deleteManyUsers,
 );
 router.put(
   "/reset-password/:id",
-  authorize(["ROOT_ADMIN", "ADMIN"]),
+  authorize(["ROOT_ADMIN"]),
   validateRequest({
     body: adminResetPasswordSchema,
     params: userIdParamsSchema,
@@ -53,11 +67,10 @@ router.put(
 );
 router.put(
   "/:id",
-  authorize(["ROOT_ADMIN", "ADMIN"]),
+  authorize(["ROOT_ADMIN"]),
   validateRequest({ body: adminUpdateUserSchema, params: userIdParamsSchema }),
   updateRole,
 );
 
-// another endpoint to delete multiple users by making a selection
 
 export default router;

@@ -1,27 +1,35 @@
 import { z } from "zod";
 
-const registerSchema = z.object({
+export const registerSchema = z.object({
   firstName: z
-    .string()
-    .trim()
-    .min(2, "First name must be at least 2 characters"),
+    .string({ required_error: "First name is required" })
+    .min(2, "First name must be at least 2 characters long"),
 
   lastName: z
     .string()
-    .trim()
-    .min(2, "Last name must be at least 2 characters")
+    .min(2, "Last name must be at least 2 characters long")
     .optional(),
 
-  email: z.string().email("Invalid email format").toLowerCase().trim(),
+  email: z
+    .string({ required_error: "Email is required" })
+    .trim()
+    .toLowerCase()
+    .email("Invalid email format")
+    .min(1, "Email cannot be empty"),
 
   password: z
-    .string()
+    .string({ required_error: "Password is required" })
     .min(8, "Password must be at least 8 characters long")
-    .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+    // .regex(/[A-Z]/, "Must contain at least one uppercase letter")
     .regex(/[0-9]/, "Must contain at least one number"),
 
-  // Allow ADMIN, READER, ROOT_ADMIN for admin-created users
-  role: z.enum(["ADMIN", "READER", "ROOT_ADMIN"]).default("READER").optional(),
+  role: z
+    .enum(["ADMIN", "READER", "ROOT_ADMIN"], {
+      errorMap: () => ({
+        message: "Role must be one of: ADMIN, READER, ROOT_ADMIN",
+      }),
+    })
+    .optional(),
 });
 
 const adminUpdateUserSchema = z.object({
@@ -46,8 +54,11 @@ const userIdParamsSchema = z.object({
   id: z.string().uuid("Invalid user ID format"),
 });
 
+const registerBulkSchema = z.array(registerSchema).nonempty("Provide atleast one user");
+
 export {
   registerSchema,
+  registerBulkSchema,
   deleteUsersSchema,
   adminResetPasswordSchema,
   adminUpdateUserSchema,
