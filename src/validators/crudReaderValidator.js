@@ -20,7 +20,7 @@ export const registerSchema = z.object({
   password: z
     .string({ required_error: "Password is required" })
     .min(8, "Password must be at least 8 characters long")
-    // .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+    .regex(/[A-Z]/, "Must contain at least one uppercase letter")
     .regex(/[0-9]/, "Must contain at least one number"),
 
   role: z
@@ -57,7 +57,6 @@ const userIdParamsSchema = z.object({
 const registerBulkSchema = z.array(registerSchema).nonempty("Provide atleast one user");
 
 export {
-  registerSchema,
   registerBulkSchema,
   deleteUsersSchema,
   adminResetPasswordSchema,

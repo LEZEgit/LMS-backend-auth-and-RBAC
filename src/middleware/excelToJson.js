@@ -5,8 +5,7 @@ import * as XLSX from "xlsx";
 const storage = multer.memoryStorage();
 export const upload = multer({ storage });
 
-import * as XLSX from "xlsx";
-import { EXCEL_COLUMN_MAP } from "../consts/excel_column_map";
+import { EXCEL_COLUMN_MAP } from "../consts/excel_column_map.js";
 
 
 /*

@@ -13,6 +13,7 @@ import authRoutes from "./routes/authRoutes.js";
 import favoritesRoutes from "./routes/readerRoutes/favoriteRoutes.js";
 // import crudBook from "./routes/adminRoutes/crudBooks.js"
 import crudReader from "./routes/adminRoutes/crudReader.js";
+import updatePasswordRoute from "./routes/updatePasswordRoute.js";
 
 config();
 validate();
@@ -58,6 +59,7 @@ the jwt would be used to carry out role dependent functions (authorisation?) (li
 app.use("/auth", authRoutes);
 app.use("/reader/favorites", favoritesRoutes);
 app.use("/admin/manage/reader", crudReader);
+app.use("/manage", updatePasswordRoute);
 // app.use("/admin/manage/book", crudBook);
 app.use(notFoundHandler);
 app.use(errorHandler);

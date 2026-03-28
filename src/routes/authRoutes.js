@@ -9,7 +9,6 @@ const router = express.Router();
 
 router.post("/login", validateRequest(loginSchema), login);
 router.post("/refresh", refreshToken);
-
 router.post("/logout", logout);
 // router.post("/forgot-passoword", forgotPassoword); 
 

@@ -1,7 +1,6 @@
 import express from "express";
 import {
   getAllUsers,
-  registerUser,
   deleteUser,
   resetPasswordByAdmin,
   deleteManyUsers,
@@ -13,13 +12,12 @@ import {
   adminResetPasswordSchema,
   adminUpdateUserSchema,
   deleteUsersSchema,
-  registerSchema,
   registerBulkSchema,
   userIdParamsSchema,
 } from "../../validators/crudReaderValidator.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
-import { excelToJsonMiddleware } from "../../middleware/excelToJson.js";
+import { upload, excelToJsonMiddleware } from "../../middleware/excelToJson.js";
 const router = express.Router();
 
 // need a middleware here to verify that the user sending this request has role: ADMIN || role: ROOT_ADMIN
@@ -37,7 +35,7 @@ A Note on Frontend Implementation:
 3. Multer Tip: By putting upload.single("file") first, if the request is JSON, Multer simply does nothing and passes it to the next middleware. It won't crash the request.
 */
 router.post(
-  "/",
+  "/register-users",
   authorize(["ROOT_ADMIN"]),
   upload.single("file"),      // 1. Grab file from 'file' field in form-data
   excelToJsonMiddleware,      // 2. Turn file or raw body into a unified array
