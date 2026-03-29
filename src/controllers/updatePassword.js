@@ -1,5 +1,6 @@
 import { prisma } from "../config/db.js";
 import bcrypt from "bcryptjs";
+import { createLog } from "../utils/logging.js";
 
 export const updatePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
@@ -25,7 +26,7 @@ export const updatePassword = async (req, res) => {
     throw error;
   }
 
-  // 3. Prevent using the same password again 
+  // 3. Prevent using the same password again
   if (currentPassword === newPassword) {
     const error = new Error("New password cannot be the same as the old one");
     error.status = 400;
@@ -40,6 +41,13 @@ export const updatePassword = async (req, res) => {
   await prisma.user.update({
     where: { id: userId },
     data: { password: hashedNewPassword },
+  });
+
+  createLog({
+    action: "PASSWORD_UPDATED",
+    entity: "User",
+    entityId: userId,
+    req, // req.user.id will be the person who changed it
   });
 
   res.status(200).json({

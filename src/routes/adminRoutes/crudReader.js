@@ -39,20 +39,20 @@ router.post(
   authorize(["ROOT_ADMIN"]),
   upload.single("file"),      // 1. Grab file from 'file' field in form-data
   excelToJsonMiddleware,      // 2. Turn file or raw body into a unified array
-  validateRequest(registerBulkSchema),
+  validateRequest({ body: registerBulkSchema}),
   registerUsersBulk,
+);
+router.post(
+  "/delete-many",
+  authorize(["ROOT_ADMIN"]),
+  validateRequest({body: deleteUsersSchema}),
+  deleteManyUsers,
 );
 router.delete(
   "/:id",
   authorize(["ROOT_ADMIN"]),
-  validateRequest(userIdParamsSchema, "params"),
+  validateRequest({params: userIdParamsSchema}),
   deleteUser,
-);
-router.delete(
-  "/delete-many",
-  authorize(["ROOT_ADMIN"]),
-  validateRequest(deleteUsersSchema),
-  deleteManyUsers,
 );
 router.put(
   "/reset-password/:id",

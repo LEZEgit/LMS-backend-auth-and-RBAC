@@ -364,32 +364,37 @@ src/├── controllers/    # Business logic├── routes/         # Route 
 
 ### Security Checklist ✅
 
--    Hash passwords with adequate rounds (10-12)
--    Use httpOnly, secure, sameSite cookies
--    Never leak user enumeration info
--    Scope queries to current user ID
--    Validate all inputs with Zod
--    Check authorization before operations
--    Use unique constraints for business rules
--    Throw standardized errors
+-   Hash passwords with adequate rounds (10-12)
+-   Use httpOnly, secure, sameSite cookies
+-   Never leak user enumeration info
+-   Scope queries to current user ID
+-   Validate all inputs with Zod
+-   Check authorization before operations
+-   Use unique constraints for business rules
+-   Throw standardized errors
 
 ### Performance Checklist ✅
 
--    Add indexes to frequently queried fields
--    Use composite unique constraints
--    Don't select unnecessary fields
--    Use proper `where` conditions
--    Batch operations when possible
--    Mock Prisma in tests (don't hit DB)
+-   Add indexes to frequently queried fields
+-   Use composite unique constraints
+-   Don't select unnecessary fields
+-   Use proper `where` conditions
+-   Batch operations when possible
+-   Mock Prisma in tests (don't hit DB)
 
 ### Code Quality Checklist ✅
 
--    Consistent error format
--    Numbered comments for complex logic
--    Middleware ordering: auth → authz → validation → handler
--    Single responsibility per function/file
--    Test critical paths
--    Document public APIs
+-   Consistent error format
+-   Numbered comments for complex logic
+-   Middleware ordering: auth → authz → validation → handler
+-   Single responsibility per function/file
+-   Test critical paths
+-   Document public APIs
+
+### Routing Checklist ✅
+
+-   Always add static routes before dynamic routes
+-   DELETE method works best with params, use POST if doing bulk delete or bulk patching as it works best with req.body
 
 ---
 

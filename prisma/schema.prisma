@@ -84,13 +84,13 @@ model AuditLog {
   action      String   // e.g., "USER_REGISTERED", "PASSWORD_UPDATED", "USER_BULK_UPLOAD"
   entity      String   // e.g., "User"
   entityId    String?  // The ID of the user being modified
-  actorId     String   // The ID of the Admin/User performing the action
+  actorId     String?   // The ID of the Admin/User performing the action
   actorEmail  String   // Helpful for quick reading without a join
   details     Json?    // Optional: Store old vs new values or metadata
   createdAt   DateTime @default(now())
 
   // Relation to the User who performed the action
-  actor User @relation("UserActions", fields: [actorId], references: [id])
+  actor User? @relation("UserActions", fields: [actorId], references: [id])
 }
 
 

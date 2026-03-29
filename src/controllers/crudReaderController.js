@@ -1,5 +1,6 @@
 import { prisma } from "../config/db.js";
 import bcrypt from "bcryptjs";
+import { createLog } from "../utils/logging.js";
 
 const registerUsersBulk = async (req, res) => {
   // 1. Authorization Check (Still required for the requester)
@@ -66,6 +67,16 @@ const registerUsersBulk = async (req, res) => {
       results.errors.push({ email, message: err.message });
     }
   }
+
+  createLog({
+    action: "USER_BULK_UPLOAD",
+    entity: "User",
+    req,
+    details: {
+      count: results.success.length,
+      failed: results.errors.length,
+    },
+  });
 
   // 3. Final Response
   res.status(201).json({
@@ -156,6 +167,12 @@ const deleteUser = async (req, res) => {
       where: { id },
     });
 
+    createLog({
+      action: "USER_DELETION",
+      entity: "User",
+      req,
+    });
+
     return res.status(200).json({
       status: "success",
       message: `User ${targetUser.email} has been permanently deleted.`,
@@ -169,8 +186,9 @@ const deleteManyUsers = async (req, res) => {
   // 1. Extract the validated data
   const { emails } = req.body;
   const currentUser = req.user;
-
+  console.log("In the delete many users");
   // 2. Safety Check: Filter out self
+  console.log("Filetering users");
   const filteredEmails = emails.filter((email) => email !== currentUser.email);
 
   // 3. Role Hierarchy Logic (as we discussed before)
@@ -179,6 +197,7 @@ const deleteManyUsers = async (req, res) => {
     rolesCanDelete.push("ADMIN");
   }
 
+  console.log("Deleting users");
   // 4. Execute Delete
   const deleted = await prisma.user.deleteMany({
     where: {
@@ -187,6 +206,14 @@ const deleteManyUsers = async (req, res) => {
       NOT: { role: "ROOT_ADMIN" },
     },
   });
+
+  console.log("Creating logs");
+  createLog({
+    action: "USER_BULK_DELETION",
+    entity: "User",
+    req,
+  });
+  console.log("Exiting deleteMany contoller");
 
   return res.status(200).json({
     message: `Deleted ${deleted.count} users successfully.`,
@@ -222,6 +249,15 @@ const updateRole = async (req, res) => {
       where: { id },
       data: {
         role: role || undefined,
+      },
+    });
+
+    createLog({
+      action: "USER_ROLE_CHANGE",
+      entity: "User",
+      req,
+      details: {
+        message: `ROLE CHANGED FROM ${existingUser.role} TO ${updatedUser.role}`,
       },
     });
 
@@ -288,6 +324,12 @@ const resetPasswordByAdmin = async (req, res) => {
         // we need to work on this: Force them to change it on next login
         // mustChangePassword: true
       },
+    });
+
+    createLog({
+      action: "USER_PASSWORD_UPDATE_BY_ADMIN",
+      entity: "User",
+      req
     });
 
     res.status(200).json({

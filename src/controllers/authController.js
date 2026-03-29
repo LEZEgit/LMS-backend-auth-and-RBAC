@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/db.js";
 import { generateToken } from "../utils/generateToken.js";
+import { _isoDateTime } from "zod/v4/core";
 
 const DEFAULT_BCRYPT_ROUNDS = 12;
 const MIN_BCRYPT_ROUNDS = 10;
@@ -113,6 +114,15 @@ const login = async (req, res) => {
     const accessToken = generateToken(user.id, res); // existing access token behavior
     const refreshToken = signRefreshToken(user.id);
     setRefreshTokenCookie(res, refreshToken);
+
+    createLog({
+      action: "USER_LOGIN",
+      entity: "User",
+      req,
+      details: {
+        message: `LOGGED IN AT /*current time*/`
+      },
+    });
 
     return sendSuccess(res, "Authenticated", {
       user: {
