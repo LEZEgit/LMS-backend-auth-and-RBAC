@@ -241,7 +241,7 @@ paths:
       tags:
         - Admin Users
       summary: List All Users
-      description: Get all users in the system (admin only)
+      description: Get all users in the system (ROOT_ADMIN or ADMIN only)
       security:
         - BearerAuth: []
       responses:
@@ -276,55 +276,103 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /admin/manage/reader/register-users:
     post:
       tags:
         - Admin Users
-      summary: Create New User
-      description: Create a new user account (admin only)
+      summary: Bulk Register Users
+      description: Register multiple users at once (ROOT_ADMIN only). Accepts either a multipart file upload or JSON array
       security:
         - BearerAuth: []
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               required:
-                - firstName
-                - email
-                - password
+                - file
               properties:
-                firstName:
+                file:
                   type: string
-                  minLength: 2
-                lastName:
-                  type: string
-                  minLength: 2
-                email:
-                  type: string
-                  format: email
-                password:
-                  type: string
-                  minLength: 8
-                role:
-                  type: string
-                  enum: [READER, ADMIN, ROOT_ADMIN]
-                  default: READER
+                  format: binary
+                  description: Excel file with user data
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                required:
+                  - firstName
+                  - email
+                  - password
+                properties:
+                  firstName:
+                    type: string
+                    minLength: 2
+                  lastName:
+                    type: string
+                  email:
+                    type: string
+                    format: email
+                  password:
+                    type: string
+                    minLength: 8
+                  role:
+                    type: string
+                    enum: [READER, ADMIN, ROOT_ADMIN]
+                    default: READER
       responses:
         "201":
-          description: User created successfully
+          description: Bulk registration completed
           content:
             application/json:
               schema:
                 type: object
+                properties:
+                  status:
+                    type: string
+                  summary:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      successful:
+                        type: number
+                      failed:
+                        type: number
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            email:
+                              type: string
+                            role:
+                              type: string
+                      errors:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            email:
+                              type: string
+                            message:
+                              type: string
         "400":
-          description: Validation error or duplicate email
+          description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "403":
-          description: Insufficient permissions
+          description: Insufficient permissions (ROOT_ADMIN only)
           content:
             application/json:
               schema:
@@ -335,7 +383,7 @@ paths:
       tags:
         - Admin Users
       summary: Delete User
-      description: Delete a user account (admin only)
+      description: Delete a user account (ROOT_ADMIN only)
       security:
         - BearerAuth: []
       parameters:
@@ -348,6 +396,15 @@ paths:
       responses:
         "200":
           description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
         "400":
           description: Cannot delete self
           content:
@@ -355,7 +412,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "403":
-          description: Cannot delete ROOT_ADMIN
+          description: Cannot delete ROOT_ADMIN or insufficient permissions
           content:
             application/json:
               schema:
@@ -371,7 +428,7 @@ paths:
       tags:
         - Admin Users
       summary: Update User Role
-      description: Update user's role (admin only)
+      description: Update user's role (ROOT_ADMIN only)
       security:
         - BearerAuth: []
       parameters:
@@ -394,6 +451,34 @@ paths:
       responses:
         "200":
           description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          name:
+                            type: string
+                          email:
+                            type: string
+                          role:
+                            type: string
+        "403":
+          description: Insufficient permissions (ROOT_ADMIN only)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "404":
           description: User not found
           content:
@@ -406,7 +491,7 @@ paths:
       tags:
         - Admin Users
       summary: Reset User Password
-      description: Force reset a user's password (admin only)
+      description: Force reset a user's password (ROOT_ADMIN only)
       security:
         - BearerAuth: []
       parameters:
@@ -431,6 +516,15 @@ paths:
       responses:
         "200":
           description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
         "400":
           description: Invalid password
           content:
@@ -438,7 +532,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "403":
-          description: Cannot reset ROOT_ADMIN password
+          description: Insufficient permissions (ROOT_ADMIN only)
           content:
             application/json:
               schema:
@@ -455,7 +549,7 @@ paths:
       tags:
         - Admin Users
       summary: Delete Multiple Users
-      description: Delete multiple users at once (admin only)
+      description: Delete multiple users at once (ROOT_ADMIN only)
       security:
         - BearerAuth: []
       requestBody:
@@ -476,12 +570,162 @@ paths:
       responses:
         "200":
           description: Users deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "403":
+          description: Insufficient permissions (ROOT_ADMIN only)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "400":
           description: Validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  /manage/update-my-password:
+    patch:
+      tags:
+        - User Profile
+      summary: Change My Password
+      description: Update current user's password (requires current password verification)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  minLength: 8
+                  description: The user's current password
+                newPassword:
+                  type: string
+                  minLength: 8
+                  description: The new password (cannot be same as current)
+      responses:
+        "200":
+          description: Password updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+        "400":
+          description: Validation error (new password same as old, etc)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Invalid current password or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /admin/audit-logs:
+    get:
+      tags:
+        - Audit
+      summary: Get Audit Logs
+      description: Retrieve system audit logs (ADMIN or ROOT_ADMIN only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Number of records per page
+      responses:
+        "200":
+          description: Audit logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  results:
+                    type: number
+                    description: Number of logs in current page
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                        description: Total number of logs
+                      page:
+                        type: number
+                      pages:
+                        type: number
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        action:
+                          type: string
+                        entity:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        actor:
+                          type: object
+                          properties:
+                            firstName:
+                              type: string
+                            lastName:
+                              type: string
+                            role:
+                              type: string
+        "403":
+          description: Insufficient permissions (ADMIN or ROOT_ADMIN only)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
 
   /reader/favorites:
     get:
@@ -560,34 +804,6 @@ paths:
                 $ref: "#/components/schemas/Error"
 
   /reader/favorites/{id}:
-    get:
-      tags:
-        - Favorites
-      summary: Get Favorite Details
-      description: Get details of a specific favorite
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Favorite details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Favorite"
-        "404":
-          description: Favorite not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
     put:
       tags:
         - Favorites
@@ -618,6 +834,14 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      favoriteItem:
+                        $ref: "#/components/schemas/Favorite"
         "404":
           description: Favorite not found
           content:
@@ -642,6 +866,20 @@ paths:
       responses:
         "200":
           description: Removed from favorites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      favoriteItem:
+                        $ref: "#/components/schemas/Favorite"
         "404":
           description: Favorite not found
           content:
@@ -701,6 +939,10 @@ tags:
   - name: Authentication
     description: User authentication and token management
   - name: Admin Users
-    description: User management endpoints (admin only)
+    description: User management endpoints (ROOT_ADMIN or ADMIN read-only)
   - name: Favorites
     description: User favorites management
+  - name: User Profile
+    description: Authenticated user profile operations
+  - name: Audit
+    description: Audit log retrieval and system activity tracking
