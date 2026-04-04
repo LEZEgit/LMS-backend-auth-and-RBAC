@@ -20,7 +20,7 @@ admins page
 
 navbar -> login button -> replace with user icon after login
 
-remove delete user
+Replace delete user with a disable user feature (as lms shouldn't be the one deciding whether the user exists or not, that; is decided by the central system of the organisation)
 
 ## think about the heirarchy again
 
