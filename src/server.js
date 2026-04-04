@@ -6,6 +6,7 @@ import { connectDB, disconnectDB } from "./config/db.js";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 
 // Import Routes
@@ -39,6 +40,7 @@ app.use(
 // Body parsing middlwares
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.get("/health", (_req, res) => {
   res.status(200).json({
