@@ -77,6 +77,8 @@ const registerUsersBulk = async (req, res) => {
       failed: results.errors.length,
     },
   });
+  
+  // sendMail(user.email)
 
   // 3. Final Response
   res.status(201).json({

@@ -1,8 +1,8 @@
 import express from "express";
 import {
   addToFavorites,
-  deleteFromFavorites,
   deleteManyFavorites,
+  getFavorites,
   updateFavoriteItem,
 } from "../../controllers/favoritesController.js";
 import { authenticate } from "../../middleware/authenticate.js";
@@ -11,7 +11,6 @@ import {
   addToFavoritesSchema,
   deleteFavoritesSchema,
   updateFavoriteItemSchema,
-  deleteFavoriteParamsSchema,
   updateFavoriteParamsSchema,
 } from "../../validators/favoritesValidator.js";
 
@@ -19,12 +18,10 @@ const router = express.Router();
 
 router.use(authenticate);
 
+
+router.get("/", getFavorites);
+
 router.post("/", validateRequest(addToFavoritesSchema), addToFavorites);
-router.delete(
-  "/:id",
-  validateRequest(deleteFavoriteParamsSchema, "params"),
-  deleteFromFavorites,
-);
 router.delete(
   "/delete-many",
   validateRequest(deleteFavoritesSchema),

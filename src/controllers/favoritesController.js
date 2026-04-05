@@ -78,39 +78,6 @@ const addToFavorites = async (req, res) => {
   }
 };
 
-const deleteFromFavorites = async (req, res) => {
-  const { id } = req.params;
-  const currentUserId = req.user.id;
-
-  try {
-    // This attempts to delete only if BOTH id and userId match
-    const deletedItem = await prisma.favorites.delete({
-      where: {
-        id: id,
-        userId: currentUserId, // Security: Ensures ownership in one go
-      },
-    });
-
-    return res.status(200).json({
-      status: "success",
-      message: "Item removed from Favorites",
-      data: { favoriteItem: deletedItem },
-    });
-  } catch (error) {
-    // P2025 is Prisma's code for "Record to delete does not exist"
-    if (error.code === "P2025") {
-      const prismaError = new Error(
-        "Item not found or you do not have permission to delete it",
-      );
-      prismaError.status = 404;
-      prismaError.code = "FAVORITE_NOT_FOUND";
-      throw prismaError;
-    }
-
-    throw error;
-  }
-};
-
 const deleteManyFavorites = async (req, res) => {
   const { ids } = req.body; // Expecting ["id1", "id2"]
   const currentUserId = req.user.id;
@@ -182,11 +149,38 @@ const updateFavoriteItem = async (req, res) => {
   }
 };
 
+const getFavorites = async (req, res) => {
+  const userId = req.user.id;
+
+  const favorites = await prisma.favorites.findMany({
+    where: {
+      userId: userId,
+    },
+    select: {
+      id: true,
+      notes: true,
+      createdAt: true,
+      book: {
+        select: {
+          title: true,
+        },
+      },
+    },
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      favorites,
+    },
+  });
+};
+
 export {
   addToFavorites,
-  deleteFromFavorites,
   deleteManyFavorites,
   updateFavoriteItem,
+  getFavorites,
 };
 
 /*
