@@ -12,6 +12,7 @@ import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 // Import Routes
 import authRoutes from "./routes/authRoutes.js";
 import favoritesRoutes from "./routes/readerRoutes/favoriteRoutes.js";
+import visitRoutes from "./routes/readerRoutes/visitRoutes.js";
 // import crudBook from "./routes/adminRoutes/crudBooks.js"
 import crudReader from "./routes/adminRoutes/crudReader.js";
 import updatePasswordRoute from "./routes/updatePasswordRoute.js";
@@ -60,6 +61,8 @@ the jwt would be used to carry out role dependent functions (authorisation?) (li
 
 app.use("/auth", authRoutes);
 app.use("/reader/favorites", favoritesRoutes);
+// need to migrate first to implement these changes
+// app.use("/reader/visits", visitRoutes);
 app.use("/admin/manage/reader", crudReader);
 app.use("/manage", updatePasswordRoute);
 // app.use("/admin/manage/book", crudBook);

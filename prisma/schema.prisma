@@ -28,6 +28,7 @@ model User {
   creator User? @relation("userToCreator", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   favorites Favorites[]
+  visits Visit[]
   bookCreator Book[] @relation("bookCreator")
   userCreator User[] @relation("userToCreator")
   auditLogs AuditLog[] @relation("UserActions")
@@ -54,6 +55,7 @@ model Book {
   createdBy String?
 
   favoriteItem Favorites[]
+  visitItems VisitItem[]
 
   creator User? @relation("bookCreator", fields: [createdBy], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
@@ -98,6 +100,44 @@ enum ROLE {
   ROOT_ADMIN
   ADMIN
   READER
+}
+
+enum VISIT_STATUS {
+  OPEN
+  COMPLETED
+}
+
+model Visit {
+  id     String       @id @default(uuid())
+  name   String
+  status VISIT_STATUS @default(OPEN)
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  items VisitItem[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model VisitItem {
+  id      String  @id @default(uuid())
+  visitId String
+  bookId  String
+  notes   String?
+  checked Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  visit Visit @relation(fields: [visitId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  book  Book  @relation(fields: [bookId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([visitId, bookId])
+  @@index([visitId])
+  @@index([bookId])
 }
 
 // User, Book, Favorites
